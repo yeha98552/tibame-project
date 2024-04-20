@@ -3,7 +3,7 @@
 Trip Attraction Analysis and Website.
 
 ## Tech Stack
-- Python 3.10
+- Python 3.10xxx
 - ...
 
 
