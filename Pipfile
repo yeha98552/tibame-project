@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 dateutils = "*"
 selenium = "*"
+webdriver-manager = "*"
 
 [dev-packages]
 pre-commit = "*"
