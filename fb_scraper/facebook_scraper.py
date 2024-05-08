@@ -1,4 +1,5 @@
 # Imports
+import os
 import re
 import pandas as pd
 from datetime import date
@@ -11,17 +12,20 @@ import time
 import hashlib
 import random
 import json
-import redis as rds
-import openpyxl
 
-# Function to read places from a file, removing numbers and dots
+
 def read_places_from_file(file_path):
+    "Function to read places from a file, removing numbers and dots"
     with open(file_path, 'r', encoding='utf-8') as file:
         places = [line.strip() for line in file.readlines()]
     return [re.sub(r'^\d+\.', '', place).strip() for place in places]
 
-# Function to extract post content
+def read_attraction_ids(csv_file_path):
+    df = pd.read_csv(csv_file_path)
+    return df.set_index('name')['attraction_id'].to_dict()
+
 def PostContent(post):
+    "Function to extract post content"
     links = post.findAll('a', {'role':'link'})
     poster = ""
     poster_link = ""
@@ -64,24 +68,31 @@ def PostContent(post):
         'all_text': all_text,
     }
 
-# Main function to orchestrate the scraping process
-def main(txt_file):
+def main(txt_file, csv_file):
+    "Main function to orchestrate the scraping process"
     ua = UserAgent()
     user_agent = ua.random
     print(user_agent)
 
     options = Options()
     options.add_argument(f'user-agent={user_agent}')
-    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-notifications")# 禁用瀏覽器的彈跳通知，可防止在自動化過程出現視窗干擾
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--headless=chrome")
+    options.add_argument("--disable-gpu")  # 禁用 GPU 硬件加速。在某些情况下，如果不禁用，headless 模式可能會出出現問題。
+    options.add_argument("--disable-extensions")  # 禁用瀏覽器extension，可以減少瀏覽器啟動時間
+    options.add_argument("--disable-infobars")  # 禁止顯示訊息欄，避免訊息欄位擋住頁面其他元素
 
     driver = webdriver.Chrome(options=options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     places = read_places_from_file(txt_file)
+    attraction_ids = read_attraction_ids(csv_file)
     base_url = "https://www.facebook.com/hashtag/{}"
+
+    # Create the directory if it does not exist
+    os.makedirs('source', exist_ok=True)
 
     for place in places:
         url = base_url.format(place)
@@ -96,7 +107,7 @@ def main(txt_file):
         
         cnt = 0
         stop_times = 0
-        PostsInformation = pd.DataFrame()
+        postsInformation = pd.DataFrame()
 
         while True:
             if stop_times > 2:
@@ -108,15 +119,13 @@ def main(txt_file):
             for idx, post in enumerate(posts):
                 try:
                     obj = PostContent(post)
-                    json_str = json.dumps(obj, sort_keys=True)
-                    key = obj['id']
-                    if key != "":
-                        PostsInformation = pd.concat([PostsInformation, pd.DataFrame([obj])],ignore_index=True)
+                    obj['attraction_id'] = attraction_ids.get(place, 'Unknown ID')
+                    postsInformation = pd.concat([postsInformation, pd.DataFrame([obj])],ignore_index=True)
                 except Exception as e:
                     print('Failed: %d' % (cnt+idx))
                     print(e)
 
-            total_posts = PostsInformation.shape[0]
+            total_posts = postsInformation.shape[0]
             add_posts = total_posts - cnt
             print('Dealing: %d (%d)' % (total_posts, add_posts))
             
@@ -125,12 +134,12 @@ def main(txt_file):
                 print('Stop times: %d' % (stop_times))
 
             driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
-            time.sleep(random.uniform(2,7))  # Random sleep to mimic user and avoid getting blocked
+            time.sleep(random.uniform(2,6))  # Random sleep to mimic user and avoid getting blocked
             
             today = date.today()
-            filename = f'PostsInformation_{place}_{today}.xlsx'
-            PostsInformation = PostsInformation.drop_duplicates("id", keep='last')
-            PostsInformation.to_excel(filename, index=False)
+            filename = f'source/postsInformation_{place}_{today}.csv'  # Modified path to include 'source' directory
+            postsInformation.drop_duplicates(subset=["post_link"], keep='last', inplace=True)
+            postsInformation.to_csv(filename, index=False)  # Changed to_csv
 
             cnt = total_posts
 
@@ -138,7 +147,7 @@ def main(txt_file):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) < 2:
-        print("Usage: python .py <txt_file_path>")
+    if len(sys.argv) < 3:
+        print("Usage: python script_name.py <txt_file_path> <csv_file_path>")
     else:
-        main(sys.argv[1])
+        main(sys.argv[1], sys.argv[2])
