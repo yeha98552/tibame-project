@@ -4,6 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pandas = "*"
+selenium = "*"
+beautifulsoup4 = "*"
+fake-useragent = "*"
+numpy = "*"
 
 [dev-packages]
 pre-commit = "*"
