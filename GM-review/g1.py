@@ -108,6 +108,10 @@ def main(fpd:str, fppd:str, flp:str) -> pd.DataFrame:
     return pd.DataFrame(fl1, columns = col)
 
 def lalnmain(fppd:str):
+    """
+    fppd: folder path to review location csv files\n
+    return attraction - latitude - longitude dataframe
+    """
     fpp = __fpplis(fr"{fppd}")
     fl1 = [[np.nan for x in range(0)] for y in range(0)]
     for k in range(len(fpp)):
@@ -115,6 +119,3 @@ def lalnmain(fppd:str):
         lo = laln(fll).replace('@','').split(',')
         fl1.append([fll['name'][0], lo[0], lo[1]])
     return pd.DataFrame(fl1, columns=['name', 'la', 'ln'])
-
-we = lalnmain(r"C:\Users\T14 Gen 3\Desktop\project data\google")
-we.to_csv("attraction_laln_v0.csv", index=False)
