@@ -106,3 +106,15 @@ def main(fpd:str, fppd:str, flp:str) -> pd.DataFrame:
             url = f'https://www.google.com/maps/reviews/{lo}/data=!3m1!4b1!4m6!14m5!1m4!2m3!1s{rid}!2m1!1s0x0:{gpid}?hl=zh-TW&entry=ttu'
             fl1.append([fl['review_id'][i], pid, fl['user_name'][i], float(fl['rating'][i]), fl['review_text'][i], 'google-maps', ti, url])
     return pd.DataFrame(fl1, columns = col)
+
+def lalnmain(fppd:str):
+    fpp = __fpplis(fr"{fppd}")
+    fl1 = [[np.nan for x in range(0)] for y in range(0)]
+    for k in range(len(fpp)):
+        fll = pd.read_csv(fpp[k][0])
+        lo = laln(fll).replace('@','').split(',')
+        fl1.append([fll['name'][0], lo[0], lo[1]])
+    return pd.DataFrame(fl1, columns=['name', 'la', 'ln'])
+
+we = lalnmain(r"C:\Users\T14 Gen 3\Desktop\project data\google")
+we.to_csv("attraction_laln_v0.csv", index=False)
