@@ -5,6 +5,9 @@ name = "pypi"
 
 [packages]
 trufflehog = "*"
+pandas = "*"
+numpy = "*"
+datetime = "*"
 
 [dev-packages]
 pre-commit = "*"
