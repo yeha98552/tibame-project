@@ -9,6 +9,9 @@ selenium = "*"
 beautifulsoup4 = "*"
 fake-useragent = "*"
 numpy = "*"
+google-cloud-storage = "*"
+google-cloud-bigquery = "*"
+google = "*"
 
 [dev-packages]
 pre-commit = "*"
