@@ -46,6 +46,7 @@ def upload_df_to_gcs(
             )
         elif filetype == "csv":
             blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"), content_type="text/csv")
+
         elif filetype == "jsonl":
             blob.upload_from_string(
                 df.to_json(orient="records", lines=True),
@@ -167,6 +168,7 @@ def build_bq_from_gcs(
             raise ValueError(
                 f"Invalid filetype: {filetype}. Please specify 'parquet' or 'csv' or 'jsonl'."
             )
+
         if filetype == "csv":
             external_config.options.skip_leading_rows = 1
 
@@ -447,4 +449,4 @@ def list_blobs(
         return sorted(blobs, key=lambda x: x.name)
     except Exception as e:
         raise Exception(f"Failed to list blobs in bucket {bucket_name}, reason: {e}")
-    
+
