@@ -1,0 +1,20 @@
+env: taiwan
+gcp:
+  bucket:
+    raw: ENV_GCP_GCS_RAW_BUCKET
+    processed: ENV_GCP_GCS_PROCESSED_BUCKET
+    archive: ENV_GCP_GCS_ARCHIVE_BUCKET
+  blob:
+    gmaps:
+      prefix: "gmaps"
+      places: "places"
+      reviews: "detailed-reviews"
+  bigquery:
+    src_dataset: ENV_BIGQUERY_SRC_DATASET
+    ods_dataset: ENV_BIGQUERY_ODS_DATASET
+    dim_dataset: ENV_BIGQUERY_DIM_DATASET
+    fact_dataset: ENV_BIGQUERY_FACT_DATASET
+    mart_dataset: ENV_BIGQUERY_MART_DATASET
+  table:
+    gmaps-places: "gmaps-places"
+    gmaps-reviews: "gmaps-reviews"

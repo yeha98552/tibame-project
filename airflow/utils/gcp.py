@@ -1,3 +1,4 @@
+import io
 from io import BytesIO
 from typing import List
 
@@ -18,6 +19,7 @@ def upload_df_to_gcs(
     blob_name: str,
     df: pd.DataFrame,
     filetype: str = "parquet",
+    timeout=3000,
 ) -> bool:
     """
     Upload a pandas dataframe to GCS.
@@ -41,16 +43,22 @@ def upload_df_to_gcs(
         return False
     try:
         if filetype == "parquet":
-            blob.upload_from_string(
-                df.to_parquet(index=False), content_type="application/octet-stream"
-            )
+            buffer = io.BytesIO()
+            df.to_parquet(buffer, index=False)
+            content_type = "application/octet-stream"
         elif filetype == "csv":
-            blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"), content_type="text/csv")
+            buffer = io.StringIO()
+            df.to_csv(buffer, index=False)
+            content_type = "text/csv"
         elif filetype == "jsonl":
-            blob.upload_from_string(
-                df.to_json(orient="records", lines=True),
-                content_type="application/jsonl",
-            )
+            buffer = io.StringIO()
+            df.to_json(buffer, orient="records", lines=True)
+            content_type = "application/jsonl"
+        else:
+            raise ValueError("Unsupported file format. Use 'parquet' or 'jsonl'.")
+
+        buffer.seek(0)
+        blob.upload_from_file(buffer, content_type=content_type, timeout=timeout)
         print("Upload successful.")
         return True
     except Exception as e:
@@ -130,6 +138,7 @@ def build_bq_from_gcs(
     bucket_name: str,
     blob_name: str,
     schema: List[bigquery.SchemaField] = None,
+    partition_by: str = None,
     filetype: str = "parquet",
 ) -> bool:
     """
@@ -143,6 +152,7 @@ def build_bq_from_gcs(
         blob_name (str): The name of the blob to upload to.
         schema (List[bigquery.SchemaField], optional): The schema of the table to upload to. Default is None.
                                                         If None, use the default schema (automatic-detect).
+        partition_by (str, optional): The field to partition by. Default is None.
         filetype (str): The type of the file to download. Default is "parquet". Can be "parquet" or "csv" or "jsonl".
 
     Returns:
@@ -157,22 +167,33 @@ def build_bq_from_gcs(
         return False
     except NotFound:
         # Define the external data source configuration
-        if filetype == "parquet":
-            external_config = bigquery.ExternalConfig("PARQUET")
-        elif filetype == "csv":
-            external_config = bigquery.ExternalConfig("CSV")
-        elif filetype == "jsonl":
-            external_config = bigquery.ExternalConfig("JSONL")
-        else:
-            raise ValueError(
-                f"Invalid filetype: {filetype}. Please specify 'parquet' or 'csv' or 'jsonl'."
+        external_config = bigquery.ExternalConfig(
+            {"parquet": "PARQUET", "csv": "CSV", "jsonl": "NEWLINE_DELIMITED_JSON"}.get(
+                filetype
             )
+        )
+        if not external_config:
+            raise ValueError(
+                f"Invalid filetype: {filetype}. Please specify 'parquet', 'csv', or 'jsonl'."
+            )
+
         if filetype == "csv":
             external_config.options.skip_leading_rows = 1
+            # Check schema becuase csv must provide schema
+            if not schema:
+                raise ValueError("CSV must provide schema")
 
         external_config.source_uris = [f"gs://{bucket_name}/{blob_name}"]
         if schema:
             external_config.schema = schema
+        # Set partition field
+        if partition_by:
+            external_config.time_partitioning = bigquery.TimePartitioning(
+                field=partition_by,
+                expiration_ms=None,
+                require_partition_filter=False,
+                type_="DAY",
+            )
         # Create a table with the external data source configuration
         table = bigquery.Table(table_id)
         table.external_data_configuration = external_config
@@ -229,6 +250,7 @@ def upload_df_to_bq(
     df: pd.DataFrame,
     dataset_name: str,
     table_name: str,
+    partition_by: str = None,
     schema: List[bigquery.SchemaField] = None,
     filetype: str = "parquet",
 ) -> bool:
@@ -265,6 +287,13 @@ def upload_df_to_bq(
         )
     if schema:
         job_config.schema = schema
+    if partition_by:
+        job_config.time_partitioning = bigquery.TimePartitioning(
+            field=partition_by,
+            expiration_ms=None,
+            require_partition_filter=False,
+            type_="DAY",
+        )
 
     try:
         job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
@@ -447,4 +476,4 @@ def list_blobs(
         return sorted(blobs, key=lambda x: x.name)
     except Exception as e:
         raise Exception(f"Failed to list blobs in bucket {bucket_name}, reason: {e}")
-    
+
