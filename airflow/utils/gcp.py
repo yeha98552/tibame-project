@@ -47,9 +47,7 @@ def upload_df_to_gcs(
             df.to_parquet(buffer, index=False)
             content_type = "application/octet-stream"
         elif filetype == "csv":
-            buffer = io.StringIO()
-            df.to_csv(buffer, index=False)
-            content_type = "text/csv"
+            blob.upload_from_string(df.to_csv(index=False, encoding="utf-8"), content_type="text/csv")
         elif filetype == "jsonl":
             buffer = io.StringIO()
             df.to_json(buffer, orient="records", lines=True)
@@ -170,11 +168,6 @@ def build_bq_from_gcs(
         external_config = bigquery.ExternalConfig(
             {"parquet": "PARQUET", "csv": "CSV", "jsonl": "NEWLINE_DELIMITED_JSON"}.get(
                 filetype
-            )
-        )
-        if not external_config:
-            raise ValueError(
-                f"Invalid filetype: {filetype}. Please specify 'parquet', 'csv', or 'jsonl'."
             )
 
         if filetype == "csv":
@@ -476,3 +469,4 @@ def list_blobs(
         return sorted(blobs, key=lambda x: x.name)
     except Exception as e:
         raise Exception(f"Failed to list blobs in bucket {bucket_name}, reason: {e}")
+

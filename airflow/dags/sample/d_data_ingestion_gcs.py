@@ -14,7 +14,7 @@ AIRFLOW_HOME = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 
 URL_PREFIX = "https://d37ci6vzurychx.cloudfront.net/trip-data"
 # TARGET_DATE = '{{ execution_date.strftime(\'%Y-%m\') }}'
-TARGET_DATE = "2021-{{ execution_date.strftime('%m') }}"
+TARGET_DATE = "2022-{{ execution_date.strftime('%m') }}"
 TARGET_FILE = "yellow_tripdata_" + TARGET_DATE + ".parquet"
 URL_TEMPLATE = URL_PREFIX + "/" + TARGET_FILE
 OUTPUT_FILE_TEMPLATE = os.path.join(AIRFLOW_HOME, TARGET_FILE)
