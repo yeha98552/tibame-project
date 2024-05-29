@@ -31,8 +31,6 @@ def main():
     index = []
     for i in range(1,738):
         index.append(i)
-    print(index)
-
 
     weather = pd.DataFrame(contents[0:737],columns=[title], index=[index])
     print(weather)
