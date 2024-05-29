@@ -1,0 +1,11 @@
+requests==2.31.0
+google-cloud-storage==2.16.0
+apache-airflow-providers-google
+pyarrow
+pandas
+sqlalchemy
+psycopg2-binary
+apache-airflow-providers-docker
+jieba
+snownlp
+fuzzywuzzy

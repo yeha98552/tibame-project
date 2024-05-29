@@ -109,3 +109,6 @@ airflow/airflow.db
 
 # Clean up
 .trash/
+
+# key file
+*_key*.json

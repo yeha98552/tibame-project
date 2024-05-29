@@ -3,7 +3,7 @@
 Trip Attraction Analysis and Website.
 
 ## Tech Stack
-- Python 3.10
+- Python 3.12
 - ...
 
 
@@ -34,6 +34,11 @@ See [more pipenv commands](https://medium.com/tsungs-blog/python-%E8%AE%93pipenv
 pipenv shell
 
 python <python_filename.py>
+```
+
+4. if install package
+```sh
+pipenv install <package_name>
 ```
 
 ## Commit rule

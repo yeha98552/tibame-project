@@ -1,0 +1,17 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.tabSize": 2,
+    "editor.rulers": [
+      100
+    ],
+    "cSpell.ignorePaths": [
+      ".git"
+    ],
+    "todo-tree.general.statusBar": "tags"
+}
